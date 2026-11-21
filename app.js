@@ -1,14 +1,17 @@
 
-const express = require('express')
-const mongoose = require('mongoose')
+const express = require('express');
+const mongoose = require('mongoose');
+const path = require('path');
 
-const app = express()
+const app = express();
 
 app.use(express.json());
+
 mongoose.connect(process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/devops_project')
 .then(() => console.log('MongoDB connected'))
 .catch(err => console.log(err));
 
+// User Schema
 const userSchema = new mongoose.Schema({
     name: String,
     email: String
@@ -16,6 +19,24 @@ const userSchema = new mongoose.Schema({
 
 const User = mongoose.model('User', userSchema);
 
+// Game Score Schema
+const scoreSchema = new mongoose.Schema({
+    score: {
+        type: Number,
+        required: true
+    },
+    createdAt: {
+        type: Date,
+        default: Date.now
+    }
+});
+
+const Score = mongoose.model('Score', scoreSchema);
+
+// Serve game frontend
+app.use(express.static(path.join(__dirname, 'public')));
+
+// Users API
 app.post('/users', async (req, res) => {
     try {
         const user = new User(req.body);
@@ -26,20 +47,34 @@ app.post('/users', async (req, res) => {
     }
 });
 
-app.get('/users', async (req, res) => {
+// Save game score
+app.post('/score', async (req, res) => {
     try {
-        const users = await User.find();
-        res.json(users);
+        const score = new Score({ score: req.body.score });
+        await score.save();
+        res.status(201).json({ message: 'Score saved', score });
     } catch (err) {
-        res.status(500).send(err);
+        res.status(500).json({ error: err.message });
     }
 });
 
+// Leaderboard
+app.get('/leaderboard', async (req, res) => {
+    try {
+        const scores = await Score.find()
+            .sort({ score: -1 })
+            .limit(10);
 
+        res.json(scores);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
 
+// Homepage
 app.get('/', (req, res) => {
-    res.send("Node.js App Running");
-})
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
 
 app.listen(3000, () => {
     console.log('App Running On port 3000');

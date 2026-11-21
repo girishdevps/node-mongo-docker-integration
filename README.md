@@ -1,66 +1,232 @@
-# Node.js + MongoDB Docker Integration
+# 🐦 Flappy Bird – Dockerized Node.js & MongoDB
 
-## Project Overview
-A two-tier application built with Node.js and MongoDB, containerized using Docker. The application and database run in separate containers and communicate through a custom Docker bridge network.
+A Flappy Bird browser game built using HTML, CSS, and JavaScript, with a Node.js and Express backend and MongoDB for storing player scores. The application is containerized using Docker, with separate containers for the game application and database.
 
-## Architecture
-- **Node.js + Express:** REST API
-- **MongoDB:** Database
-- **Docker:** Containerization
-- **Docker Bridge Network:** Container-to-container communication
-- **Docker Volume:** Persistent database storage
-- **Environment Variables:** Configurable MongoDB connection
+## 🚀 Project Overview
 
-## Architecture Flow
-Client → Node.js Container → MongoDB Container
+This project demonstrates how to deploy a web-based game using Docker containers, connect a Node.js application to MongoDB using Docker networking, and persist game scores in MongoDB.
 
-## Technologies Used
-- Linux (RHEL)
-- Docker
+Players control a bird, navigate through pipes, and their scores are stored in MongoDB when the game ends.
+
+## 🏗️ Architecture
+
+```text
+                Player / Browser
+                      |
+                      | HTTP :3000
+                      v
+              +------------------+
+              |    flappyapp     |
+              | Node.js / Express|
+              +------------------+
+                      |
+               Docker Network
+                 devops-net
+                      |
+                      v
+              +------------------+
+              |      mongob      |
+              |     MongoDB      |
+              +------------------+
+                      |
+                      v
+                mongodb_data
+                 (Volume)
+```
+
+## 🛠️ Technologies Used
+
+- HTML5
+- CSS3
+- JavaScript
 - Node.js
 - Express.js
 - MongoDB
+- Mongoose
+- Docker
 - Docker Networking
 - Docker Volumes
 
-## Features
-- REST API to create users
-- REST API to retrieve users
-- Node.js and MongoDB running in separate containers
-- Custom Docker network for service communication
-- Persistent MongoDB storage using Docker volume
-- MongoDB connection configured through environment variables
+## 📦 Docker Components
 
-## API Endpoints
+| Component | Container | Purpose |
+|---|---|---|
+| Game Application | `flappyapp` | Hosts the game and APIs |
+| Database | `mongob` | Stores game scores |
+| Docker Network | `devops-net` | Container-to-container communication |
+| Docker Volume | `mongodb_data` | Persistent MongoDB data |
+
+## ⚙️ Features
+
+- Browser-based Flappy Bird game
+- Node.js backend using Express
+- MongoDB score storage
+- REST API for saving scores
+- Leaderboard API
+- Dockerized application
+- Separate application and database containers
+- Docker bridge networking
+- Persistent database storage using Docker volumes
+
+## 🔌 API Endpoints
 
 | Method | Endpoint | Description |
 |---|---|---|
-| GET | `/` | Check application status |
-| POST | `/users` | Create a user |
-| GET | `/users` | Retrieve all users |
+| GET | `/` | Opens the game |
+| POST | `/score` | Saves a game score |
+| GET | `/leaderboard` | Returns the top 10 scores |
+| POST | `/users` | Creates a user |
 
-## Docker Components
-- Custom network: `devops-net`
-- MongoDB container: `mongo`
-- Node.js container: `node-mongo-app`
-- Persistent volume: `mongodb_data`
+## 🐳 Deployment Using Docker
 
-## Learning Outcomes
-- Built a Docker image for a Node.js application.
-- Deployed Node.js and MongoDB in separate containers.
-- Configured container communication using a custom bridge network.
-- Used Docker DNS for service discovery.
-- Implemented database persistence using a Docker volume.
-- Configured application connectivity using environment variables.
-- Tested REST API endpoints using curl.
+### 1. Create Docker Network
 
-## Future Improvements
-- Docker Compose
-- Kubernetes deployment
-- AWS deployment
-- CI/CD pipeline
+```bash
+docker network create devops-net
+```
+
+### 2. Create MongoDB Container
+
+```bash
+docker run -itd \
+--name mongob \
+--network devops-net \
+-v mongodb_data:/data/db \
+mongo
+```
+
+### 3. Build the Node.js Application Image
+
+```bash
+docker build -t flappybird:latest .
+```
+
+### 4. Run the Application Container
+
+```bash
+docker run -itd \
+--name flappyapp \
+--network devops-net \
+-p 3000:3000 \
+-e MONGO_URI=mongodb://mongob:27017/devops_project \
+flappybird:latest
+```
+
+## 🌐 Access the Game
+
+Open the game in your browser:
+
+http://localhost:3000
+
+## 🗄️ Verify MongoDB
+
+Access MongoDB shell inside the container:
+
+```bash
+docker exec -it mongob mongosh
+```
+
+Select the database:
+
+```javascript
+use devops_project
+```
+
+View stored scores:
+
+```javascript
+db.scores.find().pretty()
+```
+
+View collections:
+
+```javascript
+show collections
+```
+
+Count stored scores:
+
+```javascript
+db.scores.countDocuments()
+```
+
+## 📊 Leaderboard API
+
+Open:
+
+http://localhost:3000/leaderboard
+
+This API returns the top 10 scores sorted in descending order.
+
+## 💾 Data Persistence
+
+MongoDB data is stored using a Docker named volume:
+
+```bash
+-v mongodb_data:/data/db
+```
+
+The database data persists independently of the MongoDB container lifecycle, provided the volume is retained.
+
+## 🔍 Useful Docker Commands
+
+### View running containers
+
+```bash
+docker ps
+```
+
+### View container logs
+
+```bash
+docker logs flappyapp
+docker logs mongob
+```
+
+### Restart the application
+
+```bash
+docker restart flappyapp
+```
+
+### Restart MongoDB
+
+```bash
+docker restart mongob
+```
+
+### Inspect Docker network
+
+```bash
+docker network inspect devops-net
+```
+
+### Inspect volume
+
+```bash
+docker volume inspect mongodb_data
+```
+
+## 🎯 Learning Outcomes
+
+- Containerizing a Node.js application using Docker
+- Running MongoDB in a separate Docker container
+- Connecting containers using Docker bridge networking
+- Using Docker DNS for service discovery
+- Managing MongoDB persistent storage using named volumes
+- Building and running Docker images
+- Troubleshooting port conflicts and container connectivity
+- Working with REST APIs and database integration
+
+## 🔮 Future Improvements
+
+- Display leaderboard inside the game
+- Docker Compose deployment
+- CI/CD automation using GitHub Actions
+- Cloud deployment on AWS
 - Monitoring and logging
 
 ---
-**Project Status:** Completed Docker integration and testing.
+
+Built as a hands-on Docker and DevOps project.
 
