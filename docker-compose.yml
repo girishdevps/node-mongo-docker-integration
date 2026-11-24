@@ -1,0 +1,28 @@
+services:
+  mongodb:
+    image: mongo:latest
+    container_name: mongob
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - dev-net
+    ports:
+      - "27017:27017"
+
+  app:
+    build: .
+    container_name: flappy-bird
+    ports:
+      - "3000:3000"
+    networks:
+      - dev-net
+    environment:
+      MONGO_URI: mongodb://mongob:27017/devops_project
+    depends_on:
+      - mongodb
+
+volumes:
+  mongo_data:
+
+networks:
+  dev-net:
